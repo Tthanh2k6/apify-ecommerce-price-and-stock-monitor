@@ -1,0 +1,13 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "E-Commerce Products Output",
+  "description": "Extracted e-commerce product pricing, availability, and SKU records.",
+  "type": "object",
+  "properties": {
+    "dataset": {
+      "type": "string",
+      "title": "Extracted Products Dataset",
+      "template": "{{links.apiDefaultDatasetUrl}}/items"
+    }
+  }
+}

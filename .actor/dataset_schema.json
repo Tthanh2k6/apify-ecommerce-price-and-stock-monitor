@@ -1,0 +1,32 @@
+{
+  "actorSpecification": 1,
+  "fields": {},
+  "views": {
+    "overview": {
+      "title": "Extracted Products & Stock Status",
+      "transformation": {
+        "fields": [
+          "product_title",
+          "price_amount",
+          "currency",
+          "availability",
+          "product_url",
+          "source_page_url",
+          "extraction_method"
+        ]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "product_title": { "label": "Product Title", "format": "text" },
+          "price_amount": { "label": "Price", "format": "number" },
+          "currency": { "label": "Currency", "format": "text" },
+          "availability": { "label": "Stock Status", "format": "text" },
+          "product_url": { "label": "Product URL", "format": "link" },
+          "source_page_url": { "label": "Source URL", "format": "link" },
+          "extraction_method": { "label": "Method", "format": "text" }
+        }
+      }
+    }
+  }
+}

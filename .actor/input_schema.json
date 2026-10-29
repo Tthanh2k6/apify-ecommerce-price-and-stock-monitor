@@ -1,0 +1,26 @@
+{
+  "title": "E-Commerce Price, Stock & Product Catalog Monitor Input",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "startUrls": {
+      "title": "Product or Category Page URLs",
+      "type": "array",
+      "description": "List of e-commerce category or product URLs to extract structured pricing, stock availability, and SKU data from.",
+      "editor": "requestListSources",
+      "prefill": [
+        { "url": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html" },
+        { "url": "https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html" }
+      ]
+    },
+    "maxItemsPerPage": {
+      "title": "Max Products Per Page",
+      "type": "integer",
+      "description": "Maximum number of product items to extract per URL.",
+      "default": 25,
+      "minimum": 1,
+      "maximum": 200
+    }
+  },
+  "required": ["startUrls"]
+}
