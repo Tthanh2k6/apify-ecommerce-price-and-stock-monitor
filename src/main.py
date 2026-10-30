@@ -5,9 +5,22 @@ from Schema.org Product JSON-LD, OpenGraph tags, and universal e-commerce HTML c
 """
 import asyncio
 import json
+import os
 import re
 from urllib.parse import urljoin
 from typing import Dict, List, Any, Optional
+
+FREE_TIER_MAX_ITEMS = 25
+FREE_TIER_CAP_MSG = (
+    "Free-tier run capped at 25 results. Upgrade Apify plan for unlimited scale "
+    "or contact Trung Thanh Tran on Upwork for custom pipelines."
+)
+
+
+def is_free_tier_at_home() -> bool:
+    is_at_home = os.getenv("APIFY_IS_AT_HOME", "").strip().lower() in ("1", "true", "yes")
+    user_is_paying = os.getenv("APIFY_USER_IS_PAYING", "").strip().lower() in ("1", "true", "yes")
+    return is_at_home and not user_is_paying
 
 import httpx
 from bs4 import BeautifulSoup
@@ -145,16 +158,41 @@ async def main() -> None:
                 {"url": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html"},
                 {"url": "https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html"},
             ]
-            max_items = int(actor_input.get("maxItemsPerPage", 25))
+            max_items_per_page = int(actor_input.get("maxItemsPerPage", 25))
+            max_items = int(actor_input.get("maxItems", 25))
             urls = [item["url"] if isinstance(item, dict) else str(item) for item in raw_urls if item]
 
+            was_capped = False
+            if is_free_tier_at_home() and (
+                max_items > FREE_TIER_MAX_ITEMS
+                or max_items_per_page > FREE_TIER_MAX_ITEMS
+                or len(urls) > FREE_TIER_MAX_ITEMS
+            ):
+                max_items = min(max_items, FREE_TIER_MAX_ITEMS)
+                max_items_per_page = min(max_items_per_page, FREE_TIER_MAX_ITEMS)
+                urls = urls[:FREE_TIER_MAX_ITEMS]
+                was_capped = True
+                Actor.log.warning(FREE_TIER_CAP_MSG)
+                await Actor.set_status_message(FREE_TIER_CAP_MSG)
+
             all_products: List[Dict[str, Any]] = []
-            async with httpx.AsyncClient(headers=headers, timeout=15.0, follow_redirects=True) as client:
+            async with httpx.AsyncClient(headers=headers, timeout=12.0, follow_redirects=True) as client:
                 for u in urls:
-                    items = await scrape_ecommerce_url(client, u, max_items=max_items)
+                    remaining = max_items - len(all_products)
+                    if remaining <= 0:
+                        break
+                    items = await scrape_ecommerce_url(client, u, max_items=min(max_items_per_page, remaining))
                     all_products.extend(items)
 
+            if is_free_tier_at_home() and len(all_products) > FREE_TIER_MAX_ITEMS:
+                all_products = all_products[:FREE_TIER_MAX_ITEMS]
+                was_capped = True
+
             await Actor.push_data(all_products)
+            if was_capped:
+                await Actor.set_status_message(FREE_TIER_CAP_MSG)
+            else:
+                await Actor.set_status_message(f"Extracted {len(all_products)} e-commerce product records.")
             Actor.log.info(f"Extracted and pushed {len(all_products)} e-commerce product records.")
     else:
         sample_urls = [
@@ -167,3 +205,4 @@ async def main() -> None:
                 all_products.extend(await scrape_ecommerce_url(client, u, max_items=10))
         print(f"Extracted {len(all_products)} sample products.")
         print(json.dumps(all_products[:3], indent=2))
+

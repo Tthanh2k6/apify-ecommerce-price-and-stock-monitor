@@ -13,19 +13,19 @@ Fast, low-memory **Python Async (`httpx` + `BeautifulSoup4`) Apify Actor** that 
 
 ## 🛠️ Integration with n8n, Make.com & Python
 
-### Python (pify-client)
-`python
+### Python (`apify-client`)
+```python
 from apify_client import ApifyClient
 
 client = ApifyClient('YOUR_APIFY_TOKEN')
-run = client.actor('thanh81646/apify-ecommerce-price-and-stock-monitor').call(run_input={})
+run = client.actor('thanh81646/ecommerce-price-stock-and-schema-monitor').call(run_input={})
 for item in client.dataset(run['defaultDatasetId']).iterate_items():
     print(item)
-`
+```
 
 ### n8n / Make.com Workflow
 1. Add the official **Apify** node in **n8n** or **Make.com**.
-2. Select **Run an Actor** and choose this Actor (	hanh81646/apify-ecommerce-price-and-stock-monitor).
+2. Select **Run an Actor** and choose this Actor (`thanh81646/ecommerce-price-stock-and-schema-monitor`).
 3. Map the output Dataset items directly into **Google Sheets**, **HubSpot**, **Airtable**, **PostgreSQL / Supabase**, or **OpenAI Structured Outputs**.
 
 ---
@@ -33,6 +33,12 @@ for item in client.dataset(run['defaultDatasetId']).iterate_items():
 ## 💼 Need a Custom Scraper, Hidden API Extractor, or n8n / AI Workflow?
 
 Built and maintained by **Trung Thanh Tran** (*Python, Playwright & AI Automation Developer*):
-- 🚀 **Hire me on Upwork (1-Day Turnaround /  Starter Packages Available):** [upwork.com/freelancers/trungthanhtrandev](https://www.upwork.com/freelancers/trungthanhtrandev)
+- 🚀 **Hire me on Upwork (1-Day Turnaround / Starter Packages Available):** [upwork.com/freelancers/trungthanhtrandev](https://www.upwork.com/freelancers/trungthanhtrandev)
 - 💻 **GitHub Portfolio:** [github.com/Tthanh2k6](https://github.com/Tthanh2k6)
 - 🌐 **3D Interactive Portfolio:** [portfolio-red-theta-65.vercel.app](https://portfolio-red-theta-65.vercel.app/)
+
+---
+
+## ⚖️ Legal & Independence Disclaimer
+
+**Nominative Fair Use — Public Non-Authenticated Factual Data Only:** This Actor is an independent software utility that extracts publicly accessible, unauthenticated product catalog metadata (`Schema.org` markup and HTML cards) at the user's explicit direction. It is not affiliated with, endorsed by, or sponsored by Shopify, WooCommerce, or any third-party retailer; all trademarks belong to their respective owners (*nominative fair use*). It does not bypass authentication walls, login gates, or technical access controls. Users act as independent Data Controllers responsible for complying with applicable laws and rate limits.
