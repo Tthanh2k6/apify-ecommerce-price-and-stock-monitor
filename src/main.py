@@ -17,10 +17,17 @@ FREE_TIER_CAP_MSG = (
 )
 
 
+def _env_flag(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in ("1", "true", "yes")
+
+
+def is_at_home() -> bool:
+    """True when running on the Apify platform (APIFY_IS_AT_HOME=1)."""
+    return _env_flag("APIFY_IS_AT_HOME")
+
+
 def is_free_tier_at_home() -> bool:
-    is_at_home = os.getenv("APIFY_IS_AT_HOME", "").strip().lower() in ("1", "true", "yes")
-    user_is_paying = os.getenv("APIFY_USER_IS_PAYING", "").strip().lower() in ("1", "true", "yes")
-    return is_at_home and not user_is_paying
+    return is_at_home() and not _env_flag("APIFY_USER_IS_PAYING")
 
 import httpx
 from bs4 import BeautifulSoup
@@ -28,8 +35,12 @@ from bs4 import BeautifulSoup
 try:
     from apify import Actor
     HAS_APIFY = True
-except ImportError:
+    APIFY_IMPORT_ERROR: Optional[BaseException] = None
+except ImportError as _import_error:
+    # Without the SDK only a local run may fall back to printing results; on the platform
+    # main() turns this into a failed run instead of an empty "successful" one.
     HAS_APIFY = False
+    APIFY_IMPORT_ERROR = _import_error
 
 PRICE_REGEX = re.compile(r"([£$€¥]|USD|EUR|GBP|VND)?\s*(\d{1,6}(?:[.,]\d{2,3})?)")
 
@@ -148,6 +159,12 @@ async def scrape_ecommerce_url(client: httpx.AsyncClient, url: str, max_items: i
 
 
 async def main() -> None:
+    if not HAS_APIFY and is_at_home():
+        # A broken SDK install on the platform must fail the run, not "succeed" with an empty dataset.
+        raise RuntimeError(
+            f"Apify SDK could not be imported on the Apify platform: {APIFY_IMPORT_ERROR!r}. "
+            "Check the apify pin in requirements.txt and rebuild the Actor."
+        ) from APIFY_IMPORT_ERROR
     headers = {
         "User-Agent": "Mozilla/5.0 (compatible; ECommercePriceMonitorBot/1.0; +https://github.com/Tthanh2k6)"
     }
