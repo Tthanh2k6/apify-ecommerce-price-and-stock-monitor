@@ -1,7 +1,7 @@
 """
 Apify Store Actor: E-Commerce Product Price, Stock Status & JSON-LD Schema Extractor
 Extracts structured product titles, prices, currencies, stock availability, and URLs
-from Schema.org Product JSON-LD, OpenGraph tags, and universal e-commerce HTML cards.
+from Schema.org Product JSON-LD, falling back to common e-commerce HTML selectors.
 """
 import asyncio
 import json

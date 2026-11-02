@@ -2,7 +2,7 @@
   "actorSpecification": 1,
   "name": "ecommerce-price-stock-and-schema-monitor",
   "title": "E-Commerce Product Price, Stock Status & JSON-LD Schema Extractor",
-  "description": "Fast async E-Commerce product and catalog monitor that extracts product titles, prices, currencies, availability (In Stock / Out of Stock), SKUs, images, and Schema.org Product JSON-LD from Shopify, WooCommerce, and custom online stores.",
+  "description": "Fast async E-Commerce product and catalog monitor that extracts product titles, prices, currencies, availability (In Stock / Out of Stock), SKUs and Schema.org Product JSON-LD from Shopify, WooCommerce, and custom online stores.",
   "version": "1.0",
   "meta": {
     "templateId": "python-start"
