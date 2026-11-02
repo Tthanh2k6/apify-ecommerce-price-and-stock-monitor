@@ -1,5 +1,7 @@
 # E-Commerce Product Price, Stock Status and JSON-LD Extractor (Apify Actor)
 
+**Try it on Apify Store:** https://apify.com/thanh81646/apify-ecommerce-price-and-stock-monitor
+
 An Apify actor in async Python (`httpx` + `BeautifulSoup4`). For each product or category URL you give it, it fetches the page once and returns product title, price, currency, availability, SKU and product URL.
 
 ## How extraction works
