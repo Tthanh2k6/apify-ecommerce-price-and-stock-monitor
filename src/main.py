@@ -61,6 +61,33 @@ def parse_price_and_currency(raw_text: str) -> tuple[Optional[float], str]:
         return None, currency
 
 
+def _coerce_positive_int(value: Any, default: int) -> int:
+    """Coerce optional numeric actor input safely without crashing on None/invalid values."""
+    if value is None or isinstance(value, bool):
+        return default
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return parsed if parsed >= 1 else default
+
+
+def _extract_start_urls(raw_urls: Any) -> List[str]:
+    """Extract clean non-empty HTTP/HTTPS URL strings from Apify startUrls input."""
+    if not raw_urls:
+        return []
+    raw_list = [raw_urls] if isinstance(raw_urls, str) else (raw_urls if isinstance(raw_urls, list) else [])
+    urls: List[str] = []
+    for item in raw_list:
+        if isinstance(item, dict):
+            u = item.get("url")
+            if isinstance(u, str) and u.strip():
+                urls.append(u.strip())
+        elif isinstance(item, str) and item.strip():
+            urls.append(item.strip())
+    return urls
+
+
 def extract_json_ld_products(soup: BeautifulSoup, page_url: str) -> List[Dict[str, Any]]:
     records: List[Dict[str, Any]] = []
     for tag in soup.find_all("script", attrs={"type": "application/ld+json"}):
@@ -72,15 +99,25 @@ def extract_json_ld_products(soup: BeautifulSoup, page_url: str) -> List[Dict[st
                     continue
                 if str(item.get("@type", "")).lower() == "product":
                     offers = item.get("offers") or {}
-                    if isinstance(offers, list) and offers:
-                        offers = offers[0]
+                    if isinstance(offers, list):
+                        offers = offers[0] if offers else {}
+                    if not isinstance(offers, dict):
+                        offers = {}
                     price_val = offers.get("price")
+                    try:
+                        parsed_price = (
+                            float(price_val)
+                            if price_val is not None and str(price_val).strip() != ""
+                            else None
+                        )
+                    except (TypeError, ValueError):
+                        parsed_price = None
                     currency = offers.get("priceCurrency") or "USD"
                     avail_raw = str(offers.get("availability") or "InStock")
                     avail = "In Stock" if "instock" in avail_raw.lower() else "Out of Stock"
                     records.append({
                         "product_title": str(item.get("name") or "").strip(),
-                        "price_amount": float(price_val) if price_val is not None else None,
+                        "price_amount": parsed_price,
                         "currency": str(currency),
                         "availability": avail,
                         "sku": str(item.get("sku") or ""),
@@ -171,13 +208,16 @@ async def main() -> None:
     if HAS_APIFY:
         async with Actor:
             actor_input = await Actor.get_input() or {}
-            raw_urls = actor_input.get("startUrls") or [
-                {"url": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html"},
-                {"url": "https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html"},
-            ]
-            max_items_per_page = int(actor_input.get("maxItemsPerPage", 25))
-            max_items = int(actor_input.get("maxItems", 25))
-            urls = [item["url"] if isinstance(item, dict) else str(item) for item in raw_urls if item]
+            raw_urls = actor_input.get("startUrls")
+            if raw_urls:
+                urls = _extract_start_urls(raw_urls)
+            else:
+                urls = [
+                    "https://books.toscrape.com/catalogue/category/books/travel_2/index.html",
+                    "https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html",
+                ]
+            max_items_per_page = _coerce_positive_int(actor_input.get("maxItemsPerPage"), 25)
+            max_items = _coerce_positive_int(actor_input.get("maxItems"), 25)
 
             was_capped = False
             if is_free_tier_at_home() and (
