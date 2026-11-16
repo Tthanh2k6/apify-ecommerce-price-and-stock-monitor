@@ -1,14 +1,14 @@
 # E-Commerce Product Price, Stock Status and JSON-LD Extractor (Apify Actor)
 
-**Try it on Apify Store:** https://apify.com/thanh81646/apify-ecommerce-price-and-stock-monitor
+On Apify Store: https://apify.com/thanh81646/apify-ecommerce-price-and-stock-monitor
 
 An Apify actor in async Python (`httpx` + `BeautifulSoup4`). For each product or category URL you give it, it fetches the page once and returns product title, price, currency, availability, SKU and product URL.
 
 ## How extraction works
 
-1. **Schema.org JSON-LD first.** If the page has a `Product` JSON-LD block, it reads `name`, `sku` and the first entry in `offers` (`price`, `priceCurrency`, `availability`, `url`). Availability becomes `In Stock` if the value contains `InStock`, otherwise `Out of Stock`. Only the first offer is read, so there is no per-variant price or stock.
-2. **HTML product cards next.** If there is no JSON-LD product, it looks for common card selectors (`article.product_pod`, `div.product`, `li.product`, `div.product-card`, `div.grid-product`) and reads title, link, price text and a stock element. If a card has no stock element, it is reported as `In Stock`.
-3. **Single product page last.** If no cards are found, it tries a `h1` plus a price element.
+1. Schema.org JSON-LD first. If the page has a `Product` JSON-LD block, it reads `name`, `sku` and the first entry in `offers` (`price`, `priceCurrency`, `availability`, `url`). Availability becomes `In Stock` if the value contains `InStock`, otherwise `Out of Stock`. Only the first offer is read, so there is no per-variant price or stock.
+2. HTML product cards next. If there is no JSON-LD product, it looks for common card selectors (`article.product_pod`, `div.product`, `li.product`, `div.product-card`, `div.grid-product`) and reads title, link, price text and a stock element. If a card has no stock element, it is reported as `In Stock`.
+3. Single product page last. If no cards are found, it tries a `h1` plus a price element.
 
 Prices are parsed with a regex that recognizes `$`, `£`, `€`, `¥`, `USD`, `EUR`, `GBP` and `VND`. Anything else defaults to `USD`. Each record has an `extraction_method` field so you can see which step produced it.
 
@@ -30,6 +30,8 @@ Pages that return a non-200 status or fail to load produce no records. The actor
 Runs on the Apify free tier are capped at 25 results.
 
 ## Output record
+
+First of the 11 records from a local run on 16 Nov 2026 (`python -m src`, the two sample URLs above). `sku` is empty because category-page cards carry no SKU; product pages with JSON-LD fill it.
 
 ```json
 {
@@ -57,11 +59,13 @@ for item in client.dataset(run["defaultDatasetId"]).iterate_items():
     print(item)
 ```
 
+Tests: `pytest` runs 6 offline tests (price and currency parsing, input handling, JSON-LD offers, card and single-page fallbacks, non-200 pages).
+
 In n8n or Make.com, use the Apify "Run an Actor" node/module with the actor ID `thanh81646/apify-ecommerce-price-and-stock-monitor`.
 
 ## Need a custom version?
 
-If you need extra fields, another website, scheduled runs into Google Sheets, Airtable or a webhook, or an n8n / Make workflow around this actor, email **ttrungthanh90@gmail.com** with the target site and the fields you need, and I will reply with a fixed quote. You can also message me through my [Apify profile](https://apify.com/thanh81646).
+If you need extra fields, another website, scheduled runs into Google Sheets, Airtable or a webhook, or an n8n / Make workflow around this actor, email ttrungthanh90@gmail.com with the target site and the fields you need, and I will reply with a fixed quote. You can also message me through my [Apify profile](https://apify.com/thanh81646).
 
 ## Author
 
